@@ -38,7 +38,7 @@ class PrivyUser:
         return f"<PrivyUser did={self.privy_did}>"
 
 
-#  JWKS cache (simple in-process, refreshed per process restart) 
+# ── JWKS cache (simple in-process, refreshed per process restart) ──────────
 _jwks_cache: dict | None = None
 
 
@@ -74,36 +74,62 @@ async def verify_privy_token(
         # Decode header to pick the correct JWK
         header = pyjwt.get_unverified_header(token)
         kid = header.get("kid")
+        logger.debug("Token header: alg=%s kid=%s", header.get("alg"), kid)
 
         jwks = await _fetch_jwks(settings.PRIVY_APP_ID)
         keys = jwks.get("keys", [])
         signing_key = next((k for k in keys if k.get("kid") == kid), None)
 
         if signing_key is None:
-            logger.warning("No matching JWK for kid=%s", kid)
+            logger.warning(
+                "No matching JWK for kid=%s — available kids: %s",
+                kid, [k.get("kid") for k in keys],
+            )
             raise _401
 
-        public_key = pyjwt.algorithms.RSAAlgorithm.from_jwk(signing_key)
+        public_key = pyjwt.algorithms.ECAlgorithm.from_jwk(signing_key)
+
+        # Decode without verification first to log the claims for debugging
+        unverified = pyjwt.decode(token, options={"verify_signature": False})
+        logger.debug(
+            "Token claims (unverified): iss=%s aud=%s sub=%s exp=%s",
+            unverified.get("iss"), unverified.get("aud"),
+            unverified.get("sub", "")[:20], unverified.get("exp"),
+        )
+        logger.debug("Expected audience (PRIVY_APP_ID): %s", settings.PRIVY_APP_ID)
 
         claims = pyjwt.decode(
             token,
             key=public_key,
-            algorithms=["RS256"],
-            audience=settings.PRIVY_APP_ID,
+            algorithms=["ES256"],
+            # Privy access tokens have aud="https://auth.privy.io"
+            # app-id is in the "aid" claim instead
+            audience="https://auth.privy.io",
             options={"verify_exp": True},
         )
 
+        # Verify the token belongs to our app via the "aid" claim
+        if claims.get("aid") != settings.PRIVY_APP_ID:
+            logger.warning(
+                "Token app ID mismatch: got=%s expected=%s",
+                claims.get("aid"), settings.PRIVY_APP_ID,
+            )
+            raise _401
+
         privy_did: str = claims.get("sub", "")
-        # Privy embeds the linked wallet in the token under `evm_address`
         wallet: str | None = claims.get("evm_address") or claims.get("wallet_address")
+        logger.info("Token verified: privy_did=%s…", privy_did[:20])
 
         return PrivyUser(privy_did=privy_did, wallet_address=wallet, raw_claims=claims)
 
     except pyjwt.ExpiredSignatureError:
-        logger.info("Privy token expired")
+        logger.warning("Privy token EXPIRED")
+        raise _401
+    except pyjwt.InvalidAudienceError as exc:
+        logger.warning("Privy token audience mismatch: %s — check PRIVY_APP_ID in .env", exc)
         raise _401
     except pyjwt.PyJWTError as exc:
-        logger.warning("Privy JWT error: %s", exc)
+        logger.warning("Privy JWT error (%s): %s", type(exc).__name__, exc)
         raise _401
     except httpx.HTTPError as exc:
         logger.error("Failed to fetch Privy JWKS: %s", exc)

@@ -38,7 +38,7 @@ class PrivyUser:
         return f"<PrivyUser did={self.privy_did}>"
 
 
-# ── JWKS cache (simple in-process, refreshed per process restart) ──────────
+# JWKS cache (simple in-process, refreshed per process restart) 
 _jwks_cache: dict | None = None
 
 

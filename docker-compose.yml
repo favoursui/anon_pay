@@ -1,0 +1,39 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-anonpay}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-anonpay}
+      POSTGRES_DB: ${POSTGRES_DB:-anonpay}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-anonpay} -d ${POSTGRES_DB:-anonpay}"]
+      interval: 2s        # check every 2 s
+      timeout: 5s
+      retries: 20         # up to 40 s total before giving up
+      start_period: 5s    # give Postgres time to start init before first check
+
+  api:
+    build: .
+    restart: on-failure   # restart if the process exits non-zero
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env              # ← all secrets live here, never in this file
+    depends_on:
+      db:
+        condition: service_healthy   # wait for healthcheck to pass
+    volumes:
+      - ./backend/app:/app/app    # hot-reload in dev
+    # app/main.py lifespan calls wait_for_db() which retries 15×2 s internally,
+    # so even if Docker healthcheck passes slightly early we're still safe.
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+volumes:
+  pgdata:

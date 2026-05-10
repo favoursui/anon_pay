@@ -1,8 +1,3 @@
-# 
-#  AnonPay Backend  –  Dockerfile
-#  Base: python:3.11-slim  (as specified)
-# 
-
 FROM python:3.11-slim AS base
 
 # Reduce image size / don't write .pyc files
@@ -20,11 +15,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 #  Python deps 
-COPY backend/requirements.txt .
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 #  App source 
-COPY backend/app/ ./app/
+COPY app/ ./app/
 
 #  Non-root user 
 RUN addgroup --system anon && adduser --system --ingroup anon anon

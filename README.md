@@ -53,7 +53,7 @@ ARC Network (blockchain)
 | Backend | FastAPI, Python 3.11 |
 | Database | PostgreSQL + SQLAlchemy (async) |
 | Encryption | Fernet (AES-128-CBC) for wallet addresses at rest |
-| Blockchain | ARC Network, viem |
+| Blockchain | ARC Network |
 | Infra | Docker, Docker Compose |
 
 ---

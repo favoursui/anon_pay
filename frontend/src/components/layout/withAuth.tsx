@@ -18,9 +18,8 @@ export function withAuth(Component: React.ComponentType) {
       return (
         <div className="min-h-screen bg-bg-primary flex items-center justify-center">
           <div className="flex flex-col items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-accent-primary/20 flex items-center justify-center animate-pulse">
-              <span className="text-accent-primary font-bold font-mono">A</span>
-            </div>
+            <img src="/anonpay-logo.svg" alt="AnonPay" className="w-8 h-8 rounded-lg" />
+            <span className="font-bold text-lg tracking-tight">AnonPay</span>
             <div className="text-text-muted text-sm">Loading…</div>
           </div>
         </div>

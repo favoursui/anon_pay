@@ -30,9 +30,7 @@ export default function LandingPage() {
           animate={{ opacity: 1, x: 0 }}
           className="flex items-center gap-2"
         >
-          <div className="w-8 h-8 rounded-lg bg-accent-primary flex items-center justify-center">
-            <span className="text-bg-primary font-bold text-sm font-mono">A</span>
-          </div>
+          <img src="/anonpay-logo.svg" alt="AnonPay" className="w-8 h-8 rounded-lg" />
           <span className="font-bold text-lg tracking-tight">AnonPay</span>
         </motion.div>
 

@@ -26,6 +26,6 @@ RUN addgroup --system anon && adduser --system --ingroup anon anon
 USER anon
 
 #  Run 
-# Secrets injected at runtime via .env or platform env vars — never baked in
+# Secrets injected at runtime via .env or platform env vars - never baked in
 EXPOSE 8000
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

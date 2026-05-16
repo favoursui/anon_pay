@@ -31,9 +31,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       <aside className="hidden lg:flex flex-col w-60 border-r border-border-subtle bg-bg-secondary fixed h-full z-20">
         {/* Logo */}
         <div className="flex items-center gap-2.5 px-6 py-5 border-b border-border-subtle">
-          <div className="w-8 h-8 rounded-lg bg-accent-primary flex items-center justify-center flex-shrink-0">
-            <span className="text-bg-primary font-bold text-sm font-mono">A</span>
-          </div>
+          <img src="/anonpay-logo.svg" alt="AnonPay" className="w-8 h-8 rounded-lg" />
           <span className="font-bold text-base tracking-tight">AnonPay</span>
         </div>
 
@@ -71,9 +69,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Mobile header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 py-3 bg-bg-secondary border-b border-border-subtle">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-accent-primary flex items-center justify-center">
-            <span className="text-bg-primary font-bold text-xs font-mono">A</span>
-          </div>
+          <img src="/anonpay-logo.svg" alt="AnonPay" className="w-8 h-8 rounded-lg" />
           <span className="font-bold text-sm">AnonPay</span>
         </div>
         <button onClick={() => setMobileOpen(true)} className="p-1.5 rounded-lg hover:bg-bg-elevated transition-colors">

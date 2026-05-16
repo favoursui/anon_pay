@@ -1,6 +1,6 @@
 # AnonPay
 
-> Privacy-first USDC payment system. Send and receive payments via **@usernames** — wallet addresses are never exposed.
+> Privacy-first USDC payment system. Send and receive payments via **@usernames** - wallet addresses are never exposed.
 
 ---
 
@@ -9,10 +9,10 @@
 AnonPay lets users send and receive USDC on the ARC network using simple usernames instead of wallet addresses. Your wallet address is encrypted server-side and never appears in any URL, API response, or log.
 
 **Key properties:**
-- **Non-custodial** — your keys, your funds. AnonPay never holds or touches your USDC.
-- **Privacy-first** — wallet addresses are encrypted at rest and resolved server-side only, never exposed to senders.
-- **Username-based** — send to `@anyone` instead of `0x1234...abcd`.
-- **On-chain verification** — every payment is verified against the ARC blockchain before being marked confirmed.
+- **Non-custodial** - your keys, your funds. AnonPay never holds or touches your USDC.
+- **Privacy-first** - wallet addresses are encrypted at rest and resolved server-side only, never exposed to senders.
+- **Username-based** - send to `@anyone` instead of `0x1234...abcd`.
+- **On-chain verification** - every payment is verified against the ARC blockchain before being marked confirmed.
 
 ---
 
@@ -206,7 +206,7 @@ docker compose up --build
    Backend verifies Transfer on-chain (checks to + value)
    Marks transaction CONFIRMED
         ↓
-5. Success — both users see the transaction in history
+5. Success - both users see the transaction in history
 ```
 
 ---
@@ -263,7 +263,7 @@ No code changes needed.
 |---|---|
 | Wallet addresses | Encrypted with Fernet (AES-128-CBC) before DB write |
 | Username → wallet | Resolved in-memory during payment flow only, never logged |
-| Transaction records | Store sender/recipient as user FKs — no addresses |
+| Transaction records | Store sender/recipient as user FKs - no addresses |
 | API responses | Wallet address returned once to sender during payment init only |
 | URLs | No wallet addresses ever appear in any URL |
 

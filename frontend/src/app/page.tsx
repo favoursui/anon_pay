@@ -30,9 +30,7 @@ export default function LandingPage() {
           animate={{ opacity: 1, x: 0 }}
           className="flex items-center gap-2"
         >
-          <div className="w-8 h-8 rounded-lg bg-accent-primary flex items-center justify-center">
-            <span className="text-bg-primary font-bold text-sm font-mono">A</span>
-          </div>
+          <img src="/anonpay-logo.svg" alt="AnonPay" className="w-8 h-8 rounded-lg" />
           <span className="font-bold text-lg tracking-tight">AnonPay</span>
         </motion.div>
 
@@ -54,7 +52,7 @@ export default function LandingPage() {
           transition={{ delay: 0.1 }}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-bg-elevated border border-border-default text-xs text-text-secondary mb-8"
         >
-          <span className="w-1.5 h-1.5 rounded-full bg-accent-primary animate-pulse" />
+          <span/>
           Non-custodial · Privacy-first · On-chain
         </motion.div>
 
@@ -197,9 +195,6 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="relative z-10 border-t border-border-subtle px-6 py-8 text-center text-text-muted text-sm">
         <div className="flex items-center justify-center gap-2">
-          <div className="w-5 h-5 rounded bg-accent-primary/20 flex items-center justify-center">
-            <span className="text-accent-primary font-bold text-xs font-mono">A</span>
-          </div>
           <a href="http://x.com/anonpayxyz" className="text-green-200 hover:text-accent-primary">Anonpay</a> · Private USDC Payments · Built on <a href="http://x.com/arc" className="text-green-200 hover:text-accent-primary">Arc</a>
         </div>
       </footer>

@@ -30,7 +30,7 @@ async function fetchUSDCBalance(walletAddress: string): Promise<string> {
       chain: ARC_CHAIN,
       transport: http(process.env.NEXT_PUBLIC_CHAIN_RPC_URL),
     })
-    // USDC is the native token on ARC — use getBalance, not readContract
+    // USDC is the native token on ARC - use getBalance, not readContract
     const balance = await client.getBalance({
       address: walletAddress as `0x${string}`,
     })

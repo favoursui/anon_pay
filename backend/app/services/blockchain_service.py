@@ -1,7 +1,7 @@
 """
-Async RPC interactions with Base and ARC networks via httpx.
-Handles USDC transfer verification (non-custodial: we verify only,
-the client signs & broadcasts the transaction).
+ARC network - USDC is the NATIVE token.
+Transfers are plain value transfers, not ERC-20 contract calls.
+Chain config comes from settings — never hardcoded.
 """
 from __future__ import annotations
 
@@ -15,29 +15,11 @@ from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
-# USDC contract on Base (mainnet)
-USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
-# USDC contract on ARC
-USDC_ARC  = "0x09Bc4E0D864854c6aFB6eB9A9cdF58aC190D0dF9"
-
-# ERC-20 Transfer event topic
-TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
-
-
-def _rpc(chain: str) -> str:
-    settings = get_settings()
-    return settings.BASE_RPC_URL if chain == "base" else settings.ARC_RPC_URL
-
-
-def _usdc(chain: str) -> str:
-    return USDC_BASE if chain == "base" else USDC_ARC
-
 
 class BlockchainService:
-    """
-    Stateless service — one instance per request is fine.
-    All methods are async; uses httpx.AsyncClient internally.
-    """
+
+    def _rpc_url(self) -> str:
+        return get_settings().CHAIN_RPC_URL
 
     async def verify_transfer(
         self,
@@ -45,125 +27,104 @@ class BlockchainService:
         *,
         expected_recipient: str,
         expected_amount_usdc: Decimal,
-        chain: str = "base",
+        chain: str = "arc",
     ) -> bool:
         """
-        Verify that tx_hash is a confirmed USDC Transfer to expected_recipient
-        for exactly expected_amount_usdc.
-        Returns True on success; False if not yet confirmed or mismatch.
+        Verify a native USDC transfer on ARC.
+        Since USDC is native, we check the transaction's `to` and `value` fields
+        directly — no ERC-20 log parsing needed.
         """
-        receipt = await self._get_receipt(tx_hash, chain=chain)
+        tx = await self._get_transaction(tx_hash)
+        if tx is None:
+            logger.debug("tx %s not found", tx_hash)
+            return False
+
+        receipt = await self._get_receipt(tx_hash)
         if receipt is None:
-            logger.debug("tx %s not yet mined on %s", tx_hash, chain)
+            logger.debug("tx %s receipt not found", tx_hash)
             return False
 
         if receipt.get("status") != "0x1":
-            logger.info("tx %s reverted on %s", tx_hash, chain)
+            logger.info("tx %s reverted", tx_hash)
             return False
 
-        return self._parse_transfer_log(
-            receipt,
-            expected_recipient=expected_recipient.lower(),
-            expected_amount=int(expected_amount_usdc * 10**6),
-            chain=chain,
-        )
+        # Check recipient
+        tx_to = tx.get("to", "").lower()
+        if tx_to != expected_recipient.lower():
+            logger.warning(
+                "Recipient mismatch: got=%s expected=%s",
+                tx_to, expected_recipient.lower(),
+            )
+            return False
 
-    async def get_usdc_balance(self, wallet: str, chain: str = "base") -> Decimal:
-        """Returns USDC balance in human-readable units (divide by 1e6)."""
-        # balanceOf(address) → bytes4 selector = 0x70a08231
-        data = "0x70a08231" + wallet[2:].zfill(64).lower()
-        result = await self._eth_call(data, to=_usdc(chain), chain=chain)
-        if result is None:
+        # Check value — USDC has 18 decimals on ARC
+        tx_value_hex = tx.get("value", "0x0")
+        tx_value = int(tx_value_hex, 16)
+        expected_value = int(expected_amount_usdc * Decimal(10**18))
+
+        if tx_value != expected_value:
+            logger.warning(
+                "Amount mismatch: got=%s expected=%s (raw units)",
+                tx_value, expected_value,
+            )
+            return False
+
+        logger.info("Transfer verified: tx=%s amount=%s USDC", tx_hash[:12], expected_amount_usdc)
+        return True
+
+    async def get_native_balance(self, wallet: str) -> Decimal:
+        """Returns USDC balance (native) in human-readable units."""
+        data = await self._post({
+            "jsonrpc": "2.0",
+            "method": "eth_getBalance",
+            "params": [wallet, "latest"],
+            "id": 1,
+        })
+        if data is None:
             return Decimal(0)
-        raw = int(result, 16)
-        return Decimal(raw) / Decimal(10**6)
+        raw = int(data.get("result", "0x0"), 16)
+        return Decimal(raw) / Decimal(10**18)  # 18 decimals
 
-    #  Internal RPC helpers 
-
-    async def _post(self, payload: dict, chain: str) -> dict | None:
-        url = _rpc(chain)
+    async def _post(self, payload: dict) -> dict | None:
         async with httpx.AsyncClient(timeout=15) as client:
             try:
-                resp = await client.post(url, json=payload)
+                resp = await client.post(self._rpc_url(), json=payload)
                 resp.raise_for_status()
                 return resp.json()
             except httpx.HTTPError as exc:
-                logger.error("RPC call failed on %s: %s", chain, exc)
+                logger.error("RPC call failed: %s", exc)
                 return None
 
-    async def _get_receipt(self, tx_hash: str, chain: str) -> dict | None:
-        payload = {
+    async def _get_transaction(self, tx_hash: str) -> dict | None:
+        data = await self._post({
+            "jsonrpc": "2.0",
+            "method": "eth_getTransactionByHash",
+            "params": [tx_hash],
+            "id": 1,
+        })
+        return data.get("result") if data else None
+
+    async def _get_receipt(self, tx_hash: str) -> dict | None:
+        data = await self._post({
             "jsonrpc": "2.0",
             "method": "eth_getTransactionReceipt",
             "params": [tx_hash],
             "id": 1,
-        }
-        data = await self._post(payload, chain)
-        if data is None:
-            return None
-        return data.get("result")
-
-    async def _eth_call(self, data: str, to: str, chain: str) -> str | None:
-        payload = {
-            "jsonrpc": "2.0",
-            "method": "eth_call",
-            "params": [{"to": to, "data": data}, "latest"],
-            "id": 1,
-        }
-        resp = await self._post(payload, chain)
-        if resp is None:
-            return None
-        return resp.get("result")
-
-    #  Log parsing 
-
-    def _parse_transfer_log(
-        self,
-        receipt: dict,
-        *,
-        expected_recipient: str,
-        expected_amount: int,
-        chain: str,
-    ) -> bool:
-        usdc_contract = _usdc(chain).lower()
-        for log in receipt.get("logs", []):
-            if log.get("address", "").lower() != usdc_contract:
-                continue
-            topics = log.get("topics", [])
-            if len(topics) < 3:
-                continue
-            if topics[0].lower() != TRANSFER_TOPIC:
-                continue
-            # topics[2] = recipient (padded)
-            recipient_from_log = "0x" + topics[2][-40:]
-            if recipient_from_log.lower() != expected_recipient.lower():
-                continue
-            # data = amount (hex)
-            amount_from_log = int(log.get("data", "0x0"), 16)
-            if amount_from_log == expected_amount:
-                return True
-        return False
-
-    #  Convenience: poll until confirmed 
+        })
+        return data.get("result") if data else None
 
     async def wait_for_confirmation(
-        self,
-        tx_hash: str,
-        *,
-        expected_recipient: str,
-        expected_amount_usdc: Decimal,
-        chain: str = "base",
-        max_attempts: int = 30,
-        poll_interval: float = 3.0,
+        self, tx_hash: str, *, expected_recipient: str,
+        expected_amount_usdc: Decimal, chain: str = "arc",
+        max_attempts: int = 30, poll_interval: float = 3.0,
     ) -> bool:
         for _ in range(max_attempts):
-            confirmed = await self.verify_transfer(
+            if await self.verify_transfer(
                 tx_hash,
                 expected_recipient=expected_recipient,
                 expected_amount_usdc=expected_amount_usdc,
                 chain=chain,
-            )
-            if confirmed:
+            ):
                 return True
             await asyncio.sleep(poll_interval)
         logger.warning("tx %s not confirmed after %d attempts", tx_hash, max_attempts)

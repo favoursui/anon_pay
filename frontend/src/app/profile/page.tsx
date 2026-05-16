@@ -6,13 +6,13 @@ import { useEffect, useState, useRef } from 'react'
 import { api } from '@/lib/api'
 import { motion } from 'framer-motion'
 import { Button, Card, PageHeader, Skeleton } from '@/components/ui'
-import { User, Wallet, Shield } from 'lucide-react'
+import { User, Wallet, Shield, Copy } from 'lucide-react'
 import toast from 'react-hot-toast'
 import type { UserPrivate } from '@/lib/api'
 import { shortenAddress } from '@/lib/utils'
 
 function ProfilePage() {
-  // Use Privy directly — getAccessToken() fresh each time, no hook wrapper
+  // Use Privy directly - getAccessToken() fresh each time, no hook wrapper
   const { user, ready, getAccessToken } = usePrivy()
   const [profile, setProfile] = useState<UserPrivate | null>(null)
   const [loading, setLoading] = useState(true)
@@ -176,14 +176,28 @@ function ProfilePage() {
                   </div>
                 </div>
                 {user?.wallet?.address && (
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-accent-purple/10 flex items-center justify-center flex-shrink-0">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-accent-purple/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                       <Wallet size={14} className="text-accent-purple" />
                     </div>
-                    <div>
-                      <div className="text-xs text-text-muted">Wallet (encrypted at rest)</div>
-                      <div className="font-mono text-xs text-text-secondary">
-                        {shortenAddress(user.wallet.address)}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs text-text-muted mb-1">Your Wallet Address</div>
+                      <div className="flex items-center gap-2">
+                        <div className="font-mono text-xs text-text-secondary truncate">
+                          {user.wallet.address}
+                        </div>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(user.wallet!.address)
+                            toast.success('Wallet address copied!')
+                          }}
+                          className="flex-shrink-0 p-1.5 rounded-lg bg-bg-elevated border border-border-subtle hover:border-accent-primary/30 hover:text-accent-primary transition-all"
+                        >
+                          <Copy size={11} />
+                        </button>
+                      </div>
+                      <div className="text-xs text-text-muted mt-1">
+                        Fund this address with USDC on Arc testnet to send payments | USDC on ARC only
                       </div>
                     </div>
                   </div>

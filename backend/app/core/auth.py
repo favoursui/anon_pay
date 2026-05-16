@@ -1,6 +1,4 @@
 """
-app/core/auth.py
-────────────────
 Privy JWT verification + FastAPI dependency injection.
 """
 from __future__ import annotations

@@ -3,7 +3,7 @@
 import { usePrivy } from '@privy-io/react-auth'
 import { api } from '@/lib/api'
 
-// Central hook — calls getAccessToken() fresh before every API request
+// Central hook - calls getAccessToken() fresh before every API request
 // No useCallback wrapping to avoid dependency array infinite loops
 export function useAnonPay() {
   const { getAccessToken, authenticated, user } = usePrivy()

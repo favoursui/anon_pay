@@ -83,7 +83,7 @@ function ReceivePage() {
               </div>
             )}
             <p className="text-xs text-text-muted mt-3">
-              Share this link — senders can pay you directly from their browser.
+              Share this link, senders can pay you directly with this link.
             </p>
           </Card>
         </motion.div>
@@ -101,7 +101,7 @@ function ReceivePage() {
               </div>
             </div>
             <p className="text-xs text-text-secondary mb-4">
-              Create shareable links with pre-filled amounts — perfect for invoices, subscriptions, or donations.
+              Create shareable links with pre-filled amounts, perfect for invoices, subscriptions, or donations.
             </p>
             <Link
               href="/payment-links"

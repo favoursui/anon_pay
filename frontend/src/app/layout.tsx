@@ -4,7 +4,7 @@ import { Providers } from '@/components/Providers'
 import { Toaster } from 'react-hot-toast'
 
 export const metadata: Metadata = {
-  title: 'AnonPay — Private USDC Payments',
+  title: 'AnonPay | Private USDC Payments on Arc',
   description: 'Send and receive USDC privately via usernames. No wallet addresses exposed.',
   icons: { icon: '/favicon.ico' },
 }

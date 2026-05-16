@@ -75,7 +75,7 @@ export default function LandingPage() {
           className="text-lg text-text-secondary max-w-xl mx-auto mb-10 leading-relaxed"
         >
           Send USDC to <span className="text-text-primary font-mono">@anyone</span> without ever exposing wallet addresses.
-          Privacy-preserving payments on Base network.
+          Privacy-preserving payments on Arc network.
         </motion.p>
 
         <motion.div
@@ -200,7 +200,7 @@ export default function LandingPage() {
           <div className="w-5 h-5 rounded bg-accent-primary/20 flex items-center justify-center">
             <span className="text-accent-primary font-bold text-xs font-mono">A</span>
           </div>
-          AnonPay · Private USDC Payments · Built on Base
+          <a href="http://x.com/anonpayxyz" className="text-green-200 hover:text-accent-primary">Anonpay</a> · Private USDC Payments · Built on <a href="http://x.com/arc" className="text-green-200 hover:text-accent-primary">Arc</a>
         </div>
       </footer>
     </main>

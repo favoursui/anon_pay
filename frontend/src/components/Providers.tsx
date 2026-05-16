@@ -2,14 +2,30 @@
 
 import { PrivyProvider } from '@privy-io/react-auth'
 import { WagmiProvider, createConfig } from 'wagmi'
-import { base } from 'wagmi/chains'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { http } from 'viem'
+import { http, defineChain } from 'viem'
+
+// ARC chain definitions 
+const arcChain = defineChain({
+  id: parseInt(process.env.NEXT_PUBLIC_CHAIN_ID || '5042002'),
+  name: process.env.NEXT_PUBLIC_CHAIN_NAME || 'ARC Testnet',
+  nativeCurrency: { name: 'ARC', symbol: 'ARC', decimals: 18 },
+  rpcUrls: {
+    default: { http: [process.env.NEXT_PUBLIC_CHAIN_RPC_URL || 'https://rpc.testnet.arc.network'] },
+  },
+  blockExplorers: {
+    default: {
+      name: 'ARC Explorer',
+      url: process.env.NEXT_PUBLIC_CHAIN_EXPLORER_URL || 'https://testnet.arcscan.app',
+    },
+  },
+  testnet: true,
+})
 
 const wagmiConfig = createConfig({
-  chains: [base],
+  chains: [arcChain],
   transports: {
-    [base.id]: http('https://mainnet.base.org'),
+    [arcChain.id]: http(process.env.NEXT_PUBLIC_CHAIN_RPC_URL),
   },
 })
 
@@ -23,12 +39,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
         appearance: {
           theme: 'dark',
           accentColor: '#00ff87',
-          // removed logo — file doesn't exist and crashes Privy modal
         },
         loginMethods: ['email', 'google', 'wallet'],
         embeddedWallets: {
           createOnLogin: 'users-without-wallets',
         },
+        defaultChain: arcChain,
+        supportedChains: [arcChain],
       }}
     >
       <QueryClientProvider client={queryClient}>

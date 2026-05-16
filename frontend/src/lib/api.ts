@@ -1,5 +1,4 @@
-// src/lib/api.ts
-// Typed API client — all calls go through here
+// Typed API client - all calls go through here
 // Token is fetched fresh from Privy before every request
 
 import axios from 'axios'
@@ -11,7 +10,7 @@ export const apiClient = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// Types 
 
 export interface UserPublic {
   id: string
@@ -67,13 +66,13 @@ export interface InitiatePaymentResponse {
   status: string
 }
 
-// ── Auth helper ───────────────────────────────────────────────────────────────
+//  Auth helper 
 
 function authHeader(token: string) {
   return { Authorization: `Bearer ${token}` }
 }
 
-// ── Users ─────────────────────────────────────────────────────────────────────
+// Users 
 
 export const api = {
   // Register
@@ -123,7 +122,7 @@ export const api = {
     return res.data
   },
 
-  // ── Payments ────────────────────────────────────────────────────────────────
+  //  Payments 
 
   initiatePayment: async (token: string, data: {
     recipient_username: string
@@ -153,7 +152,7 @@ export const api = {
     return res.data
   },
 
-  // ── Payment Links ────────────────────────────────────────────────────────────
+  // Payment Links 
 
   createPaymentLink: async (token: string, data: {
     slug: string
@@ -196,7 +195,7 @@ export const api = {
     })
   },
 
-  // ── Health ────────────────────────────────────────────────────────────────────
+  // Health 
   health: async (): Promise<{ status: string }> => {
     const res = await apiClient.get('/health')
     return res.data

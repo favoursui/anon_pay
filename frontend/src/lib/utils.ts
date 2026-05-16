@@ -10,7 +10,7 @@ export function formatUSDC(amount: string | number): string {
   const num = typeof amount === 'string' ? parseFloat(amount) : amount
   return new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 2,
-    maximumFractionDigits: 6,
+    maximumFractionDigits: 2,  // always show 2 decimal places max
   }).format(num)
 }
 
@@ -39,8 +39,9 @@ export function timeAgo(dateStr: string): string {
   return 'just now'
 }
 
+// https://testnet.arcscan.app/tx/
 export function getChainExplorer(chain: string, txHash: string): string {
-  if (chain === 'base') return `https://basescan.org/tx/${txHash}`
-  if (chain === 'arc') return `https://explorer.arc.io/tx/${txHash}`
-  return '#'
+  const explorerUrl = process.env.NEXT_PUBLIC_CHAIN_EXPLORER_URL || ''
+  if (!explorerUrl || !txHash) return '#'
+  return `${explorerUrl}/tx/${txHash}`
 }

@@ -3,7 +3,7 @@
 import { cn } from '@/lib/utils'
 import { Loader2 } from 'lucide-react'
 
-// ── Button ────────────────────────────────────────────────────────────────────
+// Button 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger'
   size?: 'sm' | 'md' | 'lg'
@@ -38,7 +38,7 @@ export function Button({
   )
 }
 
-// ── Input ─────────────────────────────────────────────────────────────────────
+// Input 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string
   error?: string
@@ -70,7 +70,7 @@ export function Input({ label, error, prefix, className, ...props }: InputProps)
   )
 }
 
-// ── Textarea ──────────────────────────────────────────────────────────────────
+// Textarea 
 interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string
   error?: string
@@ -93,7 +93,7 @@ export function Textarea({ label, error, className, ...props }: TextareaProps) {
   )
 }
 
-// ── Card ──────────────────────────────────────────────────────────────────────
+// Card 
 export function Card({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
@@ -105,7 +105,7 @@ export function Card({ className, children, ...props }: React.HTMLAttributes<HTM
   )
 }
 
-// ── Badge ─────────────────────────────────────────────────────────────────────
+// Badge 
 export function StatusBadge({ status }: { status: string }) {
   return (
     <span className={cn(
@@ -125,12 +125,12 @@ export function StatusBadge({ status }: { status: string }) {
   )
 }
 
-// ── Skeleton ──────────────────────────────────────────────────────────────────
+// Skeleton 
 export function Skeleton({ className }: { className?: string }) {
   return <div className={cn('shimmer rounded-lg', className)} />
 }
 
-// ── Page Header ───────────────────────────────────────────────────────────────
+// Page Header 
 export function PageHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
     <div className="mb-8">

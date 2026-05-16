@@ -2,8 +2,6 @@
 
 > Privacy-first USDC payment system. Send and receive payments via **@usernames** - wallet addresses are never exposed.
 
-![AnonPay](./frontend/public/anonpay-logo.svg)
-
 ---
 
 ## What is AnonPay?

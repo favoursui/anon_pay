@@ -61,9 +61,7 @@ export default function PayPage() {
         {/* Header */}
         <div className="text-center mb-6">
           <Link href="/" className="inline-flex items-center gap-2 text-text-muted hover:text-text-primary transition-colors mb-4">
-            <div className="w-6 h-6 rounded bg-accent-primary/20 flex items-center justify-center">
-              <span className="text-accent-primary font-bold text-xs font-mono">A</span>
-            </div>
+            <img src="/anonpay-logo.svg" alt="AnonPay" className="w-10 h-10 object-contain animate-pulse" />
             <span className="text-sm">AnonPay</span>
           </Link>
           <h1 className="text-2xl font-bold">

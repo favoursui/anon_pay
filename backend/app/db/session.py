@@ -23,7 +23,7 @@ from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
-# ── Engine is built once, on first call to _get_engine() ─────────────────────
+# Engine is built once, on first call to _get_engine() 
 _engine: AsyncEngine | None = None
 _session_factory: async_sessionmaker | None = None
 
@@ -61,7 +61,7 @@ def _get_factory() -> async_sessionmaker:
 
 
 
-# ── Retry helper: wait for Postgres to be ready ───────────────────────────────
+# Retry helper: wait for Postgres to be ready 
 async def wait_for_db(
     retries: int = 15,
     delay: float = 2.0,
@@ -120,7 +120,7 @@ async def wait_for_db(
     )
 
 
-# ── FastAPI dependency ────────────────────────────────────────────────────────
+#  FastAPI dependency 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """Yields an async DB session; commits on success, rolls back on error."""
     async with _get_factory()() as session:
@@ -132,7 +132,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             raise
 
 
-# ── Script / test context manager ────────────────────────────────────────────
+#  Script / test context manager 
 @asynccontextmanager
 async def db_context() -> AsyncGenerator[AsyncSession, None]:
     """Async context manager for use outside FastAPI (scripts, tests)."""

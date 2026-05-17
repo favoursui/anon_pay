@@ -40,7 +40,7 @@ class Base(DeclarativeBase):
     pass
 
 
-# ── Users ────────────────────────────────────────────────────────────────────
+#  Users 
 
 class User(Base):
     __tablename__ = "users"
@@ -74,7 +74,7 @@ class User(Base):
         return f"<User @{self.username}>"
 
 
-# ── Payment Links ─────────────────────────────────────────────────────────────
+#  Payment Links 
 
 class PaymentLink(Base):
     __tablename__ = "payment_links"
@@ -103,7 +103,7 @@ class PaymentLink(Base):
         return f"<PaymentLink slug={self.slug}>"
 
 
-# ── Transactions ──────────────────────────────────────────────────────────────
+#  Transactions 
 
 class TxStatus(str, py_enum.Enum):
     PENDING   = "pending"

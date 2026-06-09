@@ -1,13 +1,7 @@
-"""
-Async SQLAlchemy engine + session factory.
-DATABASE_URL is read from settings (never hardcoded).
-
-Engine is created lazily at first use so that import-time module loading
-never attempts a DB connection (fixes Docker startup race with Postgres).
-"""
 from __future__ import annotations
 
 import asyncio
+import os
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
@@ -23,24 +17,32 @@ from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
-# Engine is built once, on first call to _get_engine() 
 _engine: AsyncEngine | None = None
 _session_factory: async_sessionmaker | None = None
+
+
+def _build_async_url(url: str) -> str:
+    """Ensure the URL uses the asyncpg driver."""
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql://", 1)
+    if "postgresql://" in url and "+asyncpg" not in url:
+        url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    return url
 
 
 def _get_engine() -> AsyncEngine:
     global _engine, _session_factory
     if _engine is None:
         settings = get_settings()
+        async_url = _build_async_url(settings.DATABASE_URL)
+        logger.info("Connecting to database...")
         _engine = create_async_engine(
-            settings.async_database_url,
+            async_url,
             echo=not settings.is_production,
-            # AsyncAdaptedQueuePool keeps a small pool of warm connections
-            # (much better than NullPool for a persistent server process).
             pool_size=5,
             max_overflow=10,
-            pool_pre_ping=True,      # detects stale connections automatically
-            pool_recycle=300,        # recycle every 5 min
+            pool_pre_ping=True,
+            pool_recycle=300,
             future=True,
         )
         _session_factory = async_sessionmaker(
@@ -54,35 +56,34 @@ def _get_engine() -> AsyncEngine:
 
 
 def _get_factory() -> async_sessionmaker:
-    _get_engine()   # ensure both are initialised
+    _get_engine()
     return _session_factory  # type: ignore[return-value]
 
 
-
-
-
-# Retry helper: wait for Postgres to be ready 
-async def wait_for_db(
-    retries: int = 15,
-    delay: float = 2.0,
-) -> None:
+async def wait_for_db(retries: int = 15, delay: float = 2.0) -> None:
     """
-    Probes the DB with a raw asyncpg connection (bypasses SQLAlchemy pool)
-    so we can catch ConnectionRefusedError / OSError directly before
-    SQLAlchemy's pool machinery has a chance to crash the process.
-    Called once from the FastAPI lifespan handler.
+    Probes DB with a raw asyncpg connection until it's ready.
+    Works on Railway, Docker, or any hosted Postgres.
     """
     import asyncpg
-    from app.core.config import get_settings
 
     settings = get_settings()
 
-    # Parse the plain postgresql:// URL for asyncpg (strip +asyncpg driver tag)
+    # Build a plain postgresql:// URL for asyncpg
     raw_url = settings.DATABASE_URL
+    if raw_url.startswith("postgres://"):
+        raw_url = raw_url.replace("postgres://", "postgresql://", 1)
     for prefix in ("postgresql+asyncpg://", "postgres+asyncpg://"):
         if raw_url.startswith(prefix):
             raw_url = "postgresql://" + raw_url[len(prefix):]
             break
+
+    import urllib.parse
+    try:
+        parsed = urllib.parse.urlparse(raw_url)
+        logger.info("Waiting for database at host=%r port=%s", parsed.hostname, parsed.port)
+    except Exception:
+        pass
 
     last_exc: Exception | None = None
     for attempt in range(1, retries + 1):
@@ -94,19 +95,6 @@ async def wait_for_db(
             return
         except Exception as exc:
             last_exc = exc
-            if attempt == 1:
-                # Extract host from URL for a clear diagnostic on first failure
-                try:
-                    import urllib.parse
-                    parsed = urllib.parse.urlparse(raw_url)
-                    logger.error(
-                        "Cannot reach database at host=%r port=%s — "
-                        "if using Docker Compose, DATABASE_URL host must be the "
-                        "service name (e.g. 'db'), not 'localhost'.",
-                        parsed.hostname, parsed.port,
-                    )
-                except Exception:
-                    pass
             logger.warning(
                 "DB not ready (attempt %d/%d): %s — retrying in %.0fs…",
                 attempt, retries, exc, delay,
@@ -116,13 +104,11 @@ async def wait_for_db(
     raise RuntimeError(
         f"Could not connect to the database after {retries} attempts. "
         f"Last error: {last_exc}. "
-        "Check DATABASE_URL and that Postgres is running."
+        "Check that DATABASE_URL is set correctly in your environment/Railway variables."
     )
 
 
-#  FastAPI dependency 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    """Yields an async DB session; commits on success, rolls back on error."""
     async with _get_factory()() as session:
         try:
             yield session
@@ -132,10 +118,8 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             raise
 
 
-#  Script / test context manager 
 @asynccontextmanager
 async def db_context() -> AsyncGenerator[AsyncSession, None]:
-    """Async context manager for use outside FastAPI (scripts, tests)."""
     async with _get_factory()() as session:
         try:
             yield session

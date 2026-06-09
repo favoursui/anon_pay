@@ -50,9 +50,6 @@ class TransactionService:
         # Resolve optional payment link
         link_id: str | None = None
         if req.payment_link_slug:
-            result = await self.db.execute(
-                select(Transaction.__table__.c.id)  # just check existence
-            )
             from app.models import PaymentLink
             pl_result = await self.db.execute(
                 select(PaymentLink).where(PaymentLink.slug == req.payment_link_slug)

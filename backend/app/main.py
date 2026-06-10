@@ -1,3 +1,7 @@
+"""
+FastAPI application factory.
+All config is loaded from .env via Settings — no hardcoded secrets.
+"""
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, status
@@ -15,14 +19,20 @@ logger = get_logger(__name__)
 settings = get_settings()
 
 
+#  Lifespan 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting AnonPay API [env=%s]", settings.ENVIRONMENT)
+    # Wait for Postgres to be ready (handles Docker startup race condition)
     await wait_for_db(retries=15, delay=2.0)
-    await init_db()  # always run — safe to call on existing tables
+    if not settings.is_production:
+        await init_db()   # auto-create tables in dev; use Alembic in prod
     yield
     logger.info("AnonPay API shutting down.")
 
+
+#  App factory 
 
 def create_app() -> FastAPI:
     app = FastAPI(
@@ -38,6 +48,7 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
+    #  CORS 
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[settings.FRONTEND_URL],
@@ -46,6 +57,7 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    #  Global exception handler 
     @app.exception_handler(Exception)
     async def unhandled_exception(request: Request, exc: Exception):
         logger.error("Unhandled exception: %s %s — %s", request.method, request.url, exc)
@@ -54,7 +66,9 @@ def create_app() -> FastAPI:
             content={"detail": "An unexpected error occurred."},
         )
 
+    #  Routers 
     app.include_router(api_router)
+
     return app
 
 

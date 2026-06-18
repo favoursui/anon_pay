@@ -195,9 +195,6 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="relative z-10 border-t border-border-subtle px-6 py-8 text-center text-text-muted text-sm">
         <div className="flex items-center justify-center gap-2">
-          <div className="w-5 h-5 rounded bg-accent-primary/20 flex items-center justify-center">
-            <span className="text-accent-primary font-bold text-xs font-mono">A</span>
-          </div>
           <a href="http://x.com/anonpayxyz" className="text-green-200 hover:text-accent-primary">Anonpay</a> · Private USDC Payments · Built on <a href="http://x.com/arc" className="text-green-200 hover:text-accent-primary">Arc</a>
         </div>
       </footer>
